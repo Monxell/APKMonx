@@ -146,11 +146,11 @@ export default function MembershipPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.08 }}
                 className={`
-                  neo-card relative
+                  neo-card relative overflow-hidden
                   ${isFree
                     ? "bg-white dark:bg-neo-gray-dark border-dashed border-2 border-gray-300 dark:border-gray-600"
                     : current
-                      ? "bg-neo-cyan/5 dark:bg-neo-purple/10 border-3 border-neo-cyan dark:border-neo-purple"
+                      ? "bg-neo-cyan/5 dark:bg-neo-purple/10 border-3 border-neo-cyan dark:border-neo-purple shadow-[0_0_20px_rgba(6,182,212,0.15)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
                       : "bg-white dark:bg-neo-gray-dark border-3 border-neo-black"
                   }
                   ${plan.popular && !isFree && !current ? "shadow-neo-lg" : "shadow-neo"}
@@ -158,11 +158,19 @@ export default function MembershipPage() {
                   transition-all duration-200
                 `}
               >
+                {/* BADGE CURRENT PLAN - POJOK KANAN ATAS */}
                 {current && (
-                  <div className="bg-neo-cyan dark:bg-neo-purple text-white text-center py-1">
-                    <span className="text-xs font-black flex items-center justify-center gap-1">
-                      <Star className="w-3 h-3 fill-current" /> YOUR CURRENT PLAN
-                    </span>
+                  <div className="absolute top-0 right-0 z-20">
+                    <div className={`
+                      ${isFree ? "bg-gray-500" : "bg-neo-cyan dark:bg-neo-purple"}
+                      text-white text-[10px] md:text-xs font-black px-3 py-1.5 md:px-4 md:py-2
+                      rounded-bl-xl border-b-2 border-l-2 border-neo-black
+                      flex items-center gap-1
+                    `}>
+                      <Star className="w-3 h-3 fill-current" />
+                      <span className="hidden md:inline">YOUR PLAN</span>
+                      <span className="md:hidden">ACTIVE</span>
+                    </div>
                   </div>
                 )}
 
@@ -174,7 +182,7 @@ export default function MembershipPage() {
                   </div>
                 )}
 
-                <div className={`p-4 md:p-5 ${current ? "pt-8 md:pt-9" : ""}`}>
+                <div className="p-4 md:p-5">
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-shrink-0 flex md:block items-center gap-3">
                       <div className={`w-14 h-14 md:w-16 md:h-16 ${accent.softBg} border-3 border-neo-black rounded-2xl flex items-center justify-center`}>
@@ -254,8 +262,8 @@ export default function MembershipPage() {
                             : "bg-neo-cyan dark:bg-neo-purple text-white border-2 border-neo-black"
                           }
                         `}>
-                          <Star className="w-4 h-4 fill-current" />
-                          {isFree ? "Current Plan" : "Active Plan"}
+                          <Check className="w-4 h-4" />
+                          {isFree ? "Free Plan" : "Active Plan"}
                         </div>
                       ) : (
                         <motion.button
@@ -304,4 +312,4 @@ export default function MembershipPage() {
       </motion.div>
     </main>
   )
-}
+                      }
