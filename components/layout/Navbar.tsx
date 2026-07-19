@@ -47,7 +47,7 @@ export function Navbar() {
             </div>
             <span className="text-xl font-black tracking-tight">
               <span className="text-neo-cyan dark:text-neo-purple">APK</span>
-              <span className="text-neo-yellow">Monza</span>
+              <span className="text-neo-yellow">Monx</span>
             </span>
           </Link>
 
