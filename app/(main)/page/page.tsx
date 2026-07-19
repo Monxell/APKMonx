@@ -18,6 +18,7 @@ async function getRecommendedApps(): Promise<App[]> {
   const { data } = await supabase
     .from("apps")
     .select("*")
+    .eq("is_recommended", true)   // <-- FIX: filter hanya yang direkomendasikan
     .order("rating", { ascending: false })
     .limit(6)
   return data || []
@@ -110,4 +111,4 @@ export default async function HomePage() {
       </section>
     </main>
   )
-}
+        }
