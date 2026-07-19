@@ -38,7 +38,7 @@ const PERIOD_OPTIONS = [
 const EMPTY_PLAN = {
   name: "",
   price: "",
-  original_price: null,
+  original_price: null as string | null,
   period: "",
   description: "",
   features: [] as string[],
@@ -269,31 +269,17 @@ function AppsTab() {
   }
 
   const toggleRecommended = async (app: App) => {
-  const newValue = !app.is_recommended
-  
-  // Optimistic update (langsung ubah UI dulu)
-  setApps(prev => prev.map(a => 
-    a.id === app.id ? { ...a, is_recommended: newValue } : a
-  ))
-
-  const { error } = await supabase
-    .from("apps")
-    .update({ is_recommended: newValue })
-    .eq("id", app.id)
-
-  if (error) {
-    // Rollback kalau error
-    setApps(prev => prev.map(a => 
-      a.id === app.id ? { ...a, is_recommended: app.is_recommended } : a
-    ))
-    toast.error("Failed to update: " + error.message)
-    return
+    const newValue = !app.is_recommended
+    setApps(prev => prev.map(a => a.id === app.id ? { ...a, is_recommended: newValue } : a))
+    const { error } = await supabase.from("apps").update({ is_recommended: newValue }).eq("id", app.id)
+    if (error) {
+      setApps(prev => prev.map(a => a.id === app.id ? { ...a, is_recommended: app.is_recommended } : a))
+      toast.error("Failed to update: " + error.message)
+      return
+    }
+    toast.success(newValue ? "Added to recommendations" : "Removed from recommendations!")
+    fetchApps()
   }
-
-  toast.success(newValue ? "Added to recommendations" : "Removed from recommendations!")
-  // Fetch ulang untuk make sure data sync
-  fetchApps()
-}
 
   const openEdit = (app: App) => { setEditingApp(app); setFormData(app); setShowModal(true) }
   const openCreate = () => { setEditingApp(null); setFormData(emptyApp); setScreenshotUrl(""); setShowModal(true) }
@@ -351,7 +337,7 @@ function AppsTab() {
                   <td className="px-4 py-3 text-sm hidden md:table-cell">{app.version}</td>
                   <td className="px-4 py-3 text-sm hidden md:table-cell">{categories.find((c) => c.id === app.category_id)?.name || "-"}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => toggleRecommended(app)} className={`neo-button p-1.5 ${app.is_recommended ? "bg-neo-yellow text-neo-black" : "bg-gray-200 text-gray-500"}`}>
+                    <button onClick={() => toggleRecommended(app)} className={`neo-button p-1.5 ${app.is_recommended ? "bg-neo-yellow text-neo-black" : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-300"}`}>
                       <Star className={`w-4 h-4 ${app.is_recommended ? "fill-current" : ""}`} />
                     </button>
                   </td>
@@ -375,7 +361,7 @@ function AppsTab() {
           <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="neo-card bg-white dark:bg-neo-gray-dark p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black">{editingApp ? "Edit App" : "Add New App"}</h2>
-              <button onClick={() => setShowModal(false)} className="neo-button p-2"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowModal(false)} className="neo-button p-2 bg-gray-300 dark:bg-gray-600 text-neo-black dark:text-white"><X className="w-4 h-4" /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -431,7 +417,7 @@ function AppsTab() {
                 <label htmlFor="is_recommended" className="font-bold text-sm cursor-pointer flex items-center gap-2"><Star className="w-4 h-4 text-neo-yellow" /> Show in Recommendations</label>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="neo-button flex-1 py-2 bg-gray-200 font-bold">Cancel</button>
+                <button type="button" onClick={() => setShowModal(false)} className="neo-button flex-1 py-2 bg-gray-400 dark:bg-gray-600 text-white font-bold">Cancel</button>
                 <button type="submit" className="neo-button flex-1 py-2 bg-neo-cyan dark:bg-neo-purple text-white font-bold">{editingApp ? "Update" : "Create"}</button>
               </div>
             </form>
@@ -562,7 +548,7 @@ function UsersTab() {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`neo-badge text-xs ${user.role === "admin" ? "bg-neo-purple text-white" : "bg-gray-200"}`}>{user.role}</span>
+                  <span className={`neo-badge text-xs ${user.role === "admin" ? "bg-neo-purple text-white" : "bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200"}`}>{user.role}</span>
                 </td>
                 <td className="px-4 py-3">
                   {user.is_vip ? (
@@ -650,7 +636,7 @@ function UsersTab() {
               ))}
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowVipModal(false)} className="flex-1 neo-button py-3 bg-gray-200 text-sm font-bold">Cancel</button>
+              <button onClick={() => setShowVipModal(false)} className="flex-1 neo-button py-3 bg-gray-400 dark:bg-gray-600 text-white text-sm font-bold">Cancel</button>
               <button onClick={handleMakeVip} className="flex-1 neo-button py-3 bg-neo-yellow text-neo-black text-sm font-bold">
                 <Crown className="w-4 h-4 inline" /> Activate
               </button>
@@ -716,12 +702,12 @@ function CategoriesTab() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="neo-card bg-white dark:bg-neo-gray-dark p-6 max-w-md w-full">
-            <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-black">{editingCat ? "Edit" : "Add"} Category</h2><button onClick={() => setShowModal(false)} className="neo-button p-2"><X className="w-4 h-4" /></button></div>
+            <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-black">{editingCat ? "Edit" : "Add"} Category</h2><button onClick={() => setShowModal(false)} className="neo-button p-2 bg-gray-300 dark:bg-gray-600 text-neo-black dark:text-white"><X className="w-4 h-4" /></button></div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><label className="block font-bold text-sm mb-1">Name</label><input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="neo-input w-full px-3 py-2" /></div>
               <div><label className="block font-bold text-sm mb-1">Icon (lucide name)</label><input value={formData.icon} onChange={(e) => setFormData({ ...formData, icon: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="gamepad2" /></div>
               <div><label className="block font-bold text-sm mb-1">Color</label><div className="flex gap-2"><input type="color" value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} className="w-12 h-10 border-2 border-neo-black rounded-lg cursor-pointer" /><input value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} className="neo-input flex-1 px-3 py-2" /></div></div>
-              <div className="flex gap-3 pt-2"><button type="button" onClick={() => setShowModal(false)} className="neo-button flex-1 py-2 bg-gray-200 font-bold">Cancel</button><button type="submit" className="neo-button flex-1 py-2 bg-neo-cyan dark:bg-neo-purple text-white font-bold">Save</button></div>
+              <div className="flex gap-3 pt-2"><button type="button" onClick={() => setShowModal(false)} className="neo-button flex-1 py-2 bg-gray-400 dark:bg-gray-600 text-white font-bold">Cancel</button><button type="submit" className="neo-button flex-1 py-2 bg-neo-cyan dark:bg-neo-purple text-white font-bold">Save</button></div>
             </form>
           </motion.div>
         </div>
@@ -806,16 +792,16 @@ function MembershipTab() {
                 </div>
               </div>
               <button onClick={() => setExpandedPlan(expandedPlan === plan.id ? null : plan.id)}
-                className="w-full mt-3 text-xs font-bold text-gray-500 py-2 border-t border-gray-200 flex items-center justify-center gap-1">
+                className="w-full mt-3 text-xs font-bold text-gray-500 py-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-center gap-1">
                 {expandedPlan === plan.id ? <><ChevronUp className="w-4 h-4" /> Less</> : <><ChevronDown className="w-4 h-4" /> More</>}
               </button>
             </div>
             {expandedPlan === plan.id && (
-              <div className="px-4 pb-4 space-y-3 border-t border-gray-200">
-                <p className="text-sm text-gray-600">{plan.description}</p>
+              <div className="px-4 pb-4 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
                 <div className="space-y-1">
                   {plan.features?.map((f: string, i: number) => (
-                    <div key={i} className="flex items-center gap-2 text-sm"><Tag className="w-3 h-3 text-gray-400" /><span className="text-gray-600">{f}</span></div>
+                    <div key={i} className="flex items-center gap-2 text-sm"><Tag className="w-3 h-3 text-gray-400" /><span className="text-gray-600 dark:text-gray-400">{f}</span></div>
                   ))}
                 </div>
                 <div className="flex gap-2">
@@ -872,7 +858,6 @@ function MembershipTab() {
                 <input type="number" min="0" max="100" value={editingPlan.discount_percent || ""} onChange={e => setEditingPlan({...editingPlan, discount_percent: e.target.value ? parseInt(e.target.value) : null})} placeholder="Discount %" className="neo-input w-full p-2" />
               </div>
 
-              {/* DROPDOWN PERIOD */}
               <div>
                 <label className="block font-bold text-sm mb-1">Period *</label>
                 <select
@@ -889,10 +874,7 @@ function MembershipTab() {
               </div>
 
               <input value={editingPlan.description || ""} onChange={e => setEditingPlan({...editingPlan, description: e.target.value})} placeholder="Description" className="neo-input w-full p-2" />
-
-              {/* GANTI BAHASA INDONESIA KE INGGRIS */}
               <input value={editingPlan.info_gangguan || ""} onChange={e => setEditingPlan({...editingPlan, info_gangguan: e.target.value || null})} placeholder="Service Notice" className="neo-input w-full p-2 border-red-400" />
-
               <div className="grid grid-cols-2 gap-3">
                 <select value={editingPlan.accent || "cyan"} onChange={e => setEditingPlan({...editingPlan, accent: e.target.value})} className="neo-input w-full p-2">
                   <option value="cyan">Cyan</option>
@@ -902,9 +884,9 @@ function MembershipTab() {
                 <input type="number" value={editingPlan.sort_order || 0} onChange={e => setEditingPlan({...editingPlan, sort_order: parseInt(e.target.value)})} placeholder="Sort Order" className="neo-input w-full p-2" />
               </div>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2"><input type="checkbox" checked={editingPlan.popular || false} onChange={e => setEditingPlan({...editingPlan, popular: e.target.checked})} /> Popular</label>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={editingPlan.is_active !== false} onChange={e => setEditingPlan({...editingPlan, is_active: e.target.checked})} /> Active</label>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={editingPlan.is_free || false} onChange={e => setEditingPlan({...editingPlan, is_free: e.target.checked})} /> Free</label>
+                <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><input type="checkbox" checked={editingPlan.popular || false} onChange={e => setEditingPlan({...editingPlan, popular: e.target.checked})} /> Popular</label>
+                <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><input type="checkbox" checked={editingPlan.is_active !== false} onChange={e => setEditingPlan({...editingPlan, is_active: e.target.checked})} /> Active</label>
+                <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><input type="checkbox" checked={editingPlan.is_free || false} onChange={e => setEditingPlan({...editingPlan, is_free: e.target.checked})} /> Free</label>
               </div>
               <div className="space-y-2">
                 {(editingPlan.features || []).map((f: string, i: number) => (
@@ -913,10 +895,12 @@ function MembershipTab() {
                     <button onClick={() => setEditingPlan({...editingPlan, features: (editingPlan.features || []).filter((_:any, ii:number) => ii !== i)})} className="neo-button p-2 bg-red-100 text-red-600 border-red-400"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
-                <button onClick={() => setEditingPlan({...editingPlan, features: [...(editingPlan.features || []), ""]})} className="neo-button w-full py-2 bg-gray-100 text-sm font-bold">+ Add Feature</button>
+                <button onClick={() => setEditingPlan({...editingPlan, features: [...(editingPlan.features || []), ""]})} className="neo-button w-full py-2 bg-neo-purple/20 dark:bg-neo-purple/40 text-neo-purple dark:text-neo-purple font-bold border-neo-purple">
+                  <Plus className="w-4 h-4 inline mr-1" /> Add Feature
+                </button>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setIsModalOpen(false)} className="flex-1 neo-button py-2 bg-gray-200 font-bold">Cancel</button>
+                <button onClick={() => setIsModalOpen(false)} className="flex-1 neo-button py-2 bg-gray-400 dark:bg-gray-600 text-white font-bold">Cancel</button>
                 <button onClick={handleSave} className="flex-1 neo-button py-2 bg-neo-cyan text-white font-bold">Save</button>
               </div>
             </div>
