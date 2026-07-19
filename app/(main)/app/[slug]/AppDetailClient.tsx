@@ -8,7 +8,7 @@ import { App, Category } from "@/types"
 import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { AppCard } from "@/components/ui/AppCard"
-import FavoriteButton from "@/components/FavoriteButton"
+import FavoriteButton from "@/components/ui/FavoriteButton"
 import { toast } from "sonner"
 
 interface Props {
@@ -122,12 +122,12 @@ export function AppDetailClient({ app, relatedApps }: Props) {
             )}
           </div>
 
-          {/* Info App */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg md:text-xl font-black truncate">{app.name}</h1>
+          {/* Info App — FIX: dirapatkan */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center space-y-0.5">
+            <h1 className="text-lg md:text-xl font-black truncate leading-tight">{app.name}</h1>
 
-            {/* VERSION + CATEGORY + FAVORITE BUTTON (SEJAJAR) */}
-            <div className="flex items-center justify-between gap-2 mt-1">
+            {/* VERSION + CATEGORY + FAVORITE BUTTON */}
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-bold min-w-0">
                 <span className="text-neo-cyan dark:text-neo-purple">v{app.version}</span>
                 {category && (
@@ -146,7 +146,8 @@ export function AppDetailClient({ app, relatedApps }: Props) {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 mt-2 text-sm">
+            {/* RATING + DOWNLOAD */}
+            <div className="flex items-center gap-3 text-sm">
               <span className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-neo-yellow text-neo-yellow" />
                 <span className="font-bold">{app.rating || "4.5"}</span>
