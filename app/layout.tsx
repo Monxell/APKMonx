@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
   description: "Download aplikasi dan game mod terbaru dengan style Neo Brutalism modern. Aman, cepat, dan terpercaya.",
   keywords: ["apk download", "game mod", "android", "neo brutalism", "app store"],
-  authors: [{ name: "APKMonza" }],
+  authors: [{ name: "Monxell" }],
   openGraph: {
     type: "website",
     locale: "id_ID",
