@@ -122,38 +122,44 @@ export function AppDetailClient({ app, relatedApps }: Props) {
             )}
           </div>
 
-         {/* Info App */}
-<div className="flex-1 min-w-0 flex flex-col justify-center">
-  <h1 className="text-lg md:text-xl font-black truncate leading-none">{app.name}</h1>
+          {/* Info App — FIX: margin negatif buat nempel rapat */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <h1 className="text-lg md:text-xl font-black truncate leading-none">{app.name}</h1>
 
-  {/* VERSION + CATEGORY + FAVORITE */}
-  <div className="flex items-center justify-between gap-2 -mt-1">
-    <div className="flex items-center gap-2 text-sm font-bold min-w-0">
-      <span className="text-neo-cyan dark:text-neo-purple">v{app.version}</span>
-      {category && (
-        <>
-          <span className="text-gray-400">•</span>
-          <span className="text-gray-500 dark:text-gray-400 truncate">{category.name}</span>
-        </>
-      )}
-    </div>
-    <div className="flex-shrink-0">
-      <FavoriteButton appId={app.id} isVip={isVip} userId={user?.id} />
-    </div>
-  </div>
+            {/* VERSION + CATEGORY + FAVORITE BUTTON */}
+            <div className="flex items-center justify-between gap-2 -mt-1">
+              <div className="flex items-center gap-2 text-sm font-bold min-w-0">
+                <span className="text-neo-cyan dark:text-neo-purple">v{app.version}</span>
+                {category && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-500 dark:text-gray-400 truncate">{category.name}</span>
+                  </>
+                )}
+              </div>
+              <div className="flex-shrink-0">
+                <FavoriteButton 
+                  appId={app.id} 
+                  isVip={isVip} 
+                  userId={user?.id} 
+                />
+              </div>
+            </div>
 
-  {/* RATING + DOWNLOAD */}
-  <div className="flex items-center gap-3 text-sm -mt-1">
-    <span className="flex items-center gap-1">
-      <Star className="w-4 h-4 fill-neo-yellow text-neo-yellow" />
-      <span className="font-bold">{app.rating || "4.5"}</span>
-    </span>
-    <span className="flex items-center gap-1">
-      <Download className="w-4 h-4 text-gray-400" />
-      <span className="font-bold">{(app.download_count || 0).toLocaleString()}</span>
-    </span>
-  </div>
-</div>
+            {/* RATING + DOWNLOAD */}
+            <div className="flex items-center gap-3 text-sm -mt-1">
+              <span className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-neo-yellow text-neo-yellow" />
+                <span className="font-bold">{app.rating || "4.5"}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <Download className="w-4 h-4 text-gray-400" />
+                <span className="font-bold">{(app.download_count || 0).toLocaleString()}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* 2. Screenshots */}
       {app.screenshots && app.screenshots.length > 0 && (
