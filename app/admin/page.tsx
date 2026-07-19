@@ -9,7 +9,7 @@ import {
   Image as ImageIcon, BarChart3, TrendingUp,
   Download, X, Star, Link as LinkIcon, Trash,
   CreditCard, Tag, AlertTriangle, GripVertical, Zap, Loader2, ChevronUp, ChevronDown,
-  Check, ExternalLink, Copy, // <-- add this
+  Check, ExternalLink, Copy,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { App, MembershipPlan } from "@/types"
@@ -30,6 +30,15 @@ const ACCENT_OPTIONS = [
   { value: "cyan", label: "Cyan" },
   { value: "yellow", label: "Yellow" },
   { value: "purple", label: "Purple" },
+]
+
+const PERIOD_OPTIONS = [
+  { value: "1 week", label: "1 Week (7 days)" },
+  { value: "1 month", label: "1 Month (30 days)" },
+  { value: "3 months", label: "3 Months (90 days)" },
+  { value: "6 months", label: "6 Months (180 days)" },
+  { value: "1 year", label: "1 Year (365 days)" },
+  { value: "lifetime", label: "Lifetime (Forever)" },
 ]
 
 const EMPTY_PLAN: Partial<MembershipPlan> = {
@@ -235,12 +244,12 @@ function AppsTab() {
   const supabase = createClient()
 
   const emptyApp: Partial<App> = {
-  name: "", slug: "", version: "", developer: "",
-  mod_feature: "", mod_feature_full: "", description: "",
-  package_name: "", size: "", free_url: "", direct_url: "", vip_url: "",  // ← tambah direct_url
-  category_id: "", icon_url: "", screenshots: [], is_recommended: false,
-  rating: 4.5, download_count: 0,
-}
+    name: "", slug: "", version: "", developer: "",
+    mod_feature: "", mod_feature_full: "", description: "",
+    package_name: "", size: "", free_url: "", direct_url: "", vip_url: "",
+    category_id: "", icon_url: "", screenshots: [], is_recommended: false,
+    rating: 4.5, download_count: 0,
+  }
   const [formData, setFormData] = useState<Partial<App>>(emptyApp)
 
   useEffect(() => { fetchApps(); fetchCategories() }, [])
@@ -421,8 +430,8 @@ function AppsTab() {
               <div><label className="block font-bold text-sm mb-1">Description</label><textarea value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={4} className="neo-input w-full px-3 py-2" placeholder="App description..." /></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div><label className="block font-bold text-sm mb-1">Free Download URL</label><input value={formData.free_url || ""} onChange={(e) => setFormData({ ...formData, free_url: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="https://..." /></div>
-<div><label className="block font-bold text-sm mb-1">Direct Link Non-VIP</label><input value={formData.direct_url || ""} onChange={(e) => setFormData({ ...formData, direct_url: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="https://..." /></div>
-<div><label className="block font-bold text-sm mb-1">VIP Download URL</label><input value={formData.vip_url || ""} onChange={(e) => setFormData({ ...formData, vip_url: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="https://..." /></div>
+                <div><label className="block font-bold text-sm mb-1">Direct Link Non-VIP</label><input value={formData.direct_url || ""} onChange={(e) => setFormData({ ...formData, direct_url: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="https://..." /></div>
+                <div><label className="block font-bold text-sm mb-1">VIP Download URL</label><input value={formData.vip_url || ""} onChange={(e) => setFormData({ ...formData, vip_url: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="https://..." /></div>
               </div>
               <div className="flex items-center gap-3 p-3 border-2 border-neo-black rounded-lg bg-neo-gray-light dark:bg-neo-gray-dark">
                 <input type="checkbox" id="is_recommended" checked={formData.is_recommended || false} onChange={(e) => setFormData({ ...formData, is_recommended: e.target.checked })} className="w-5 h-5 border-2 border-neo-black rounded cursor-pointer" />
@@ -470,37 +479,37 @@ function UsersTab() {
   }
 
   const handleMakeVip = async () => {
-  if (!selectedUser || !selectedPlanId) return
-  const plan = plans.find(p => p.id === selectedPlanId)
-  if (!plan) return
+    if (!selectedUser || !selectedPlanId) return
+    const plan = plans.find(p => p.id === selectedPlanId)
+    if (!plan) return
 
-  let days = 30
-  const periodStr = (plan.period || "").toLowerCase()
-  const nameStr = (plan.name || "").toLowerCase()
+    let days = 30
+    const periodStr = (plan.period || "").toLowerCase()
+    const nameStr = (plan.name || "").toLowerCase()
 
-  // Parse format: "3 months", "1 year", "2 week", dll
-  const match = periodStr.match(/(\d+)\s*(week|month|year)/)
-  if (match) {
-    const num = parseInt(match[1])
-    const unit = match[2]
-    if (unit === "week") days = num * 7
-    else if (unit === "month") days = num * 30
-    else if (unit === "year") days = num * 365
-  } else if (periodStr.includes("lifetime") || nameStr.includes("lifetime")) {
-    days = 36500
+    // Parse format: "3 months", "1 year", "2 week", dll
+    const match = periodStr.match(/(\d+)\s*(week|month|year)/)
+    if (match) {
+      const num = parseInt(match[1])
+      const unit = match[2]
+      if (unit === "week") days = num * 7
+      else if (unit === "month") days = num * 30
+      else if (unit === "year") days = num * 365
+    } else if (periodStr.includes("lifetime") || nameStr.includes("lifetime")) {
+      days = 36500
+    }
+
+    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+
+    const { error } = await supabase.from("users").update({ 
+      is_vip: true, vip_plan_id: selectedPlanId, vip_expires_at: expiresAt 
+    }).eq("id", selectedUser.id)
+
+    if (error) { toast.error("Failed to activate VIP"); return }
+    toast.success(`VIP ${plan.name} activated! (${days} days)`)
+    setShowVipModal(false)
+    fetchUsers()
   }
-
-  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-
-  const { error } = await supabase.from("users").update({ 
-    is_vip: true, vip_plan_id: selectedPlanId, vip_expires_at: expiresAt 
-  }).eq("id", selectedUser.id)
-
-  if (error) { toast.error("Failed to activate VIP"); return }
-  toast.success(`VIP ${plan.name} activated! (${days} hari)`)
-  setShowVipModal(false)
-  fetchUsers()
-}
 
   const handleRemoveVip = async (id: string) => {
     const { error } = await supabase.from("users").update({ 
@@ -649,7 +658,7 @@ function UsersTab() {
                   </div>
                   <div className="flex-1 text-left">
                     <p className="font-bold text-sm">{plan.name}</p>
-                    <p className="text-xs text-gray-500">{plan.price}{plan.period}</p>
+                    <p className="text-xs text-gray-500">{plan.price} / {plan.period}</p>
                   </div>
                   {selectedPlanId === plan.id && <Check className="w-5 h-5 text-neo-cyan" />}
                 </button>
@@ -667,7 +676,6 @@ function UsersTab() {
     </div>
   )
 }
-
 
 /* ─────────────── CATEGORIES ─────────────── */
 function CategoriesTab() {
@@ -697,11 +705,6 @@ function CategoriesTab() {
       toast.success("Category created!")
     }
     setShowModal(false); setEditingCat(null); setFormData({ name: "", slug: "", icon: "", color: "#06b6d4" }); fetchCategories()
-  }
-
-  const handleCopyUrl = (url: string, label: string) => {
-    navigator.clipboard.writeText(url)
-    toast.success(`${label} copied to clipboard!`)
   }
 
   const handleDelete = async (id: string) => {
@@ -772,11 +775,6 @@ function MembershipTab() {
     fetchPlans()
   }
 
-  const handleCopyUrl = (url: string, label: string) => {
-    navigator.clipboard.writeText(url)
-    toast.success(`${label} copied to clipboard!`)
-  }
-
   const handleDelete = async (id: string) => {
     if (!confirm("Delete?")) return
     await supabase.from("membership_plans").delete().eq("id", id)
@@ -790,7 +788,7 @@ function MembershipTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black flex items-center gap-2"><Crown className="w-6 h-6 text-neo-yellow" /> Membership Plans</h1>
-        <button onClick={() => { setEditingPlan({ name: "", price: "", period: "", description: "", features: [], accent: "cyan", sort_order: plans.length, is_active: true, is_free: false, popular: false }); setIsModalOpen(true) }}
+        <button onClick={() => { setEditingPlan({ ...EMPTY_PLAN, sort_order: plans.length }); setIsModalOpen(true) }}
           className="neo-button px-4 py-2 bg-neo-cyan text-white font-bold text-sm">
           <Plus className="w-4 h-4 inline" /> Add
         </button>
@@ -891,7 +889,23 @@ function MembershipTab() {
                 <input value={editingPlan.original_price || ""} onChange={e => setEditingPlan({...editingPlan, original_price: e.target.value || null})} placeholder="Original Price" className="neo-input w-full p-2" />
                 <input type="number" min="0" max="100" value={editingPlan.discount_percent || ""} onChange={e => setEditingPlan({...editingPlan, discount_percent: e.target.value ? parseInt(e.target.value) : null})} placeholder="Discount %" className="neo-input w-full p-2" />
               </div>
-              <input value={editingPlan.period || ""} onChange={e => setEditingPlan({...editingPlan, period: e.target.value})} placeholder="Period" className="neo-input w-full p-2" />
+              
+              {/* DROPDOWN PERIOD */}
+              <div>
+                <label className="block font-bold text-sm mb-1">Period *</label>
+                <select 
+                  value={editingPlan.period || ""} 
+                  onChange={e => setEditingPlan({...editingPlan, period: e.target.value})} 
+                  className="neo-input w-full p-2"
+                >
+                  <option value="">Select period...</option>
+                  {PERIOD_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">This determines how long VIP will be active for users.</p>
+              </div>
+              
               <input value={editingPlan.description || ""} onChange={e => setEditingPlan({...editingPlan, description: e.target.value})} placeholder="Description" className="neo-input w-full p-2" />
               <input value={editingPlan.info_gangguan || ""} onChange={e => setEditingPlan({...editingPlan, info_gangguan: e.target.value || null})} placeholder="Info Gangguan" className="neo-input w-full p-2 border-red-400" />
               <div className="grid grid-cols-2 gap-3">
