@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Download, Calendar, Package, HardDrive, Crown, ArrowLeft, ChevronRight, Zap, Info, Server, Star } from "lucide-react"
+import { Download, Calendar, Package, HardDrive, Crown, ArrowLeft, ChevronRight, Zap, Info, Server, Star, Heart } from "lucide-react"
 import { App, Category } from "@/types"
 import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { AppCard } from "@/components/ui/AppCard"
+import FavoriteButton from "@/components/FavoriteButton"
 import { toast } from "sonner"
 
 interface Props {
@@ -96,10 +97,11 @@ export function AppDetailClient({ app, relatedApps }: Props) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-1 neo-card bg-white dark:bg-neo-gray-dark p-6"
+        className="mx-1 neo-card bg-white dark:bg-neo-gray-dark p-5"
       >
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0 w-24 h-24 bg-neo-cyan/20 dark:bg-neo-purple/20 border-3 border-neo-black rounded-2xl flex items-center justify-center overflow-hidden shadow-neo">
+          {/* Icon App */}
+          <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 bg-neo-cyan/20 dark:bg-neo-purple/20 border-3 border-neo-black rounded-2xl flex items-center justify-center overflow-hidden shadow-neo">
             {app.icon_url ? (
               <img
                 src={app.icon_url}
@@ -120,8 +122,9 @@ export function AppDetailClient({ app, relatedApps }: Props) {
             )}
           </div>
 
+          {/* Info App */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-black truncate">{app.name}</h1>
+            <h1 className="text-lg md:text-xl font-black truncate">{app.name}</h1>
 
             <div className="flex items-center gap-2 text-sm font-bold mt-1">
               <span className="text-neo-cyan dark:text-neo-purple">v{app.version}</span>
@@ -143,6 +146,15 @@ export function AppDetailClient({ app, relatedApps }: Props) {
                 <span className="font-bold">{(app.download_count || 0).toLocaleString()}</span>
               </span>
             </div>
+          </div>
+
+          {/* TOMBOL FAVORITE — POJOK KANAN */}
+          <div className="flex-shrink-0 self-start">
+            <FavoriteButton 
+              appId={app.id} 
+              isVip={isVip} 
+              userId={user?.id} 
+            />
           </div>
         </div>
       </motion.div>
@@ -222,26 +234,24 @@ export function AppDetailClient({ app, relatedApps }: Props) {
         <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{app.description}</p>
       </motion.div>
 
-   {/* 5. Tech Specs */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.4 }}
-  className="mx-1 neo-card bg-white dark:bg-neo-gray-dark p-6"
->
-  <h2 className="text-xl font-black mb-4 flex items-center gap-2">
-    <Server className="w-5 h-5 text-neo-cyan dark:text-neo-purple" />
-    Tech Specs
-  </h2>
-<div className="grid grid-cols-2 gap-3">
-  <InfoItem icon={<ChevronRight className="w-5 h-5" />} label="Version" value={app.version} />
-  <InfoItem icon={<HardDrive className="w-5 h-5" />} label="Size" value={app.size} />
-  <InfoItem icon={<Package className="w-5 h-5" />} label="Package" value={app.package_name} />
-  <InfoItem icon={<Calendar className="w-5 h-5" />} label="Updated" value={formatDate(app.upload_date)} />
-</div>
-
-</motion.div>
-
+      {/* 5. Tech Specs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mx-1 neo-card bg-white dark:bg-neo-gray-dark p-6"
+      >
+        <h2 className="text-xl font-black mb-4 flex items-center gap-2">
+          <Server className="w-5 h-5 text-neo-cyan dark:text-neo-purple" />
+          Tech Specs
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          <InfoItem icon={<ChevronRight className="w-5 h-5" />} label="Version" value={app.version} />
+          <InfoItem icon={<HardDrive className="w-5 h-5" />} label="Size" value={app.size} />
+          <InfoItem icon={<Package className="w-5 h-5" />} label="Package" value={app.package_name} />
+          <InfoItem icon={<Calendar className="w-5 h-5" />} label="Updated" value={formatDate(app.upload_date)} />
+        </div>
+      </motion.div>
 
       {/* 6. Download Link */}
       <motion.div
@@ -361,5 +371,4 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
       <p className="font-bold text-sm truncate">{value}</p>
     </div>
   )
-                                                                                           }
-    
+}

@@ -79,3 +79,11 @@ export interface MembershipPlan {
   created_at?: string
   updated_at?: string
 }
+
+export interface Favorite {
+  id: string
+  user_id: string
+  app_id: string
+  created_at: string
+  app?: App // joined data
+}
