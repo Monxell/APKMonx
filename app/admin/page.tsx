@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -8,11 +8,11 @@ import {
   Plus, Pencil, Trash2, Search, Crown, UserCheck, UserX,
   Image as ImageIcon, BarChart3, TrendingUp,
   Download, X, Star, Link as LinkIcon, Trash,
-  CreditCard, Tag, AlertTriangle, GripVertical, Zap, Loader2, ChevronUp, ChevronDown,
-  Check, ExternalLink, Copy,
+  CreditCard, Tag, AlertTriangle, Loader2, ChevronUp, ChevronDown,
+  Check, ExternalLink,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { App, MembershipPlan } from "@/types"
+import { App } from "@/types"
 import { toast } from "sonner"
 import { generateSlug, formatDate } from "@/lib/utils"
 
@@ -26,12 +26,6 @@ const tabs = [
   { id: "membership" as Tab, label: "Membership", icon: CreditCard },
 ]
 
-const ACCENT_OPTIONS = [
-  { value: "cyan", label: "Cyan" },
-  { value: "yellow", label: "Yellow" },
-  { value: "purple", label: "Purple" },
-]
-
 const PERIOD_OPTIONS = [
   { value: "1 week", label: "1 Week (7 days)" },
   { value: "1 month", label: "1 Month (30 days)" },
@@ -41,19 +35,19 @@ const PERIOD_OPTIONS = [
   { value: "lifetime", label: "Lifetime (Forever)" },
 ]
 
-const EMPTY_PLAN: Partial<MembershipPlan> = {
+const EMPTY_PLAN = {
   name: "",
   price: "",
   original_price: null,
   period: "",
   description: "",
-  features: [],
+  features: [] as string[],
   accent: "cyan",
   popular: false,
   is_active: true,
   sort_order: 0,
-  info_gangguan: null,
-  discount_percent: null,
+  info_gangguan: null as string | null,
+  discount_percent: null as number | null,
   is_free: false,
 }
 
@@ -67,45 +61,28 @@ export default function AdminPage() {
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser) {
-        window.location.href = "/auth/login"
-        return
-      }
+      if (!authUser) { window.location.href = "/auth/login"; return }
       setUser(authUser)
-
-      const { data: profile } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", authUser.id)
-        .single()
-
-      if (profile?.role !== "admin") {
-        window.location.href = "/"
-        return
-      }
-      setIsAdmin(true)
-      setChecking(false)
+      const { data: profile } = await supabase.from("users").select("role").eq("id", authUser.id).single()
+      if (profile?.role !== "admin") { window.location.href = "/"; return }
+      setIsAdmin(true); setChecking(false)
     }
     checkAdmin()
   }, [supabase])
 
-  if (checking) {
-    return (
-      <div className="min-h-screen bg-neo-gray-light dark:bg-neo-black flex items-center justify-center">
-        <div className="neo-card bg-white dark:bg-neo-gray-dark p-8 text-center">
-          <div className="w-12 h-12 border-4 border-neo-cyan dark:border-neo-purple border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="font-bold">Checking admin access...</p>
-        </div>
+  if (checking) return (
+    <div className="min-h-screen bg-neo-gray-light dark:bg-neo-black flex items-center justify-center">
+      <div className="neo-card bg-white dark:bg-neo-gray-dark p-8 text-center">
+        <div className="w-12 h-12 border-4 border-neo-cyan dark:border-neo-purple border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="font-bold">Checking admin access...</p>
       </div>
-    )
-  }
-
+    </div>
+  )
   if (!isAdmin) return null
 
   return (
     <div className="min-h-screen bg-neo-gray-light dark:bg-neo-black">
       <div className="flex">
-        {/* Sidebar Desktop */}
         <aside className="w-64 bg-white dark:bg-neo-gray-dark border-r-2 border-neo-black min-h-screen p-6 hidden lg:block sticky top-0">
           <Link href="/" className="flex items-center gap-2 mb-8">
             <div className="w-10 h-10 bg-neo-cyan dark:bg-neo-purple border-2 border-neo-black rounded-lg shadow-neo flex items-center justify-center">
@@ -134,7 +111,6 @@ export default function AdminPage() {
           </nav>
         </aside>
 
-        {/* Mobile Nav */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-neo-gray-dark border-b-2 border-neo-black p-2 flex gap-1 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon
@@ -149,7 +125,6 @@ export default function AdminPage() {
           })}
         </div>
 
-        {/* Main Content */}
         <main className="flex-1 p-6 lg:p-8 lg:pt-8 pt-20">
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
@@ -269,7 +244,6 @@ function AppsTab() {
     e.preventDefault()
     const slug = formData.slug || generateSlug(formData.name || "")
     const dataToSend = { ...formData, slug }
-
     if (editingApp) {
       const { error } = await supabase.from("apps").update(dataToSend).eq("id", editingApp.id)
       if (error) { toast.error("Failed to update: " + error.message); return }
@@ -310,8 +284,7 @@ function AppsTab() {
     const currentScreenshots = formData.screenshots || []
     if (currentScreenshots.includes(screenshotUrl.trim())) { toast.error("This screenshot URL already exists"); return }
     setFormData({ ...formData, screenshots: [...currentScreenshots, screenshotUrl.trim()] })
-    setScreenshotUrl("")
-    toast.success("Screenshot added!")
+    setScreenshotUrl(""); toast.success("Screenshot added!")
   }
 
   const removeScreenshot = (index: number) => {
@@ -486,8 +459,6 @@ function UsersTab() {
     let days = 30
     const periodStr = (plan.period || "").toLowerCase()
     const nameStr = (plan.name || "").toLowerCase()
-
-    // Parse format: "3 months", "1 year", "2 week", dll
     const match = periodStr.match(/(\d+)\s*(week|month|year)/)
     if (match) {
       const num = parseInt(match[1])
@@ -500,15 +471,13 @@ function UsersTab() {
     }
 
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-
     const { error } = await supabase.from("users").update({ 
       is_vip: true, vip_plan_id: selectedPlanId, vip_expires_at: expiresAt 
     }).eq("id", selectedUser.id)
 
     if (error) { toast.error("Failed to activate VIP"); return }
     toast.success(`VIP ${plan.name} activated! (${days} days)`)
-    setShowVipModal(false)
-    fetchUsers()
+    setShowVipModal(false); fetchUsers()
   }
 
   const handleRemoveVip = async (id: string) => {
@@ -541,14 +510,12 @@ function UsersTab() {
       <h1 className="text-2xl md:text-3xl font-black flex items-center gap-2">
         <Users className="w-7 h-7 md:w-8 md:h-8 text-neo-cyan dark:text-neo-purple" /> Manage Users
       </h1>
-      
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search users..." className="neo-input w-full pl-12 pr-4 py-3 text-sm md:text-base" />
       </div>
 
-      {/* Desktop */}
       <div className="hidden md:block neo-card bg-white dark:bg-neo-gray-dark overflow-hidden">
         <table className="w-full">
           <thead>
@@ -607,7 +574,6 @@ function UsersTab() {
         </table>
       </div>
 
-      {/* Mobile */}
       <div className="md:hidden space-y-3">
         {filtered.map(user => (
           <div key={user.id} className="neo-card bg-white dark:bg-neo-gray-dark p-4 space-y-3">
@@ -643,7 +609,6 @@ function UsersTab() {
         ))}
       </div>
 
-      {/* VIP Modal */}
       {showVipModal && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="neo-card bg-white dark:bg-neo-gray-dark w-full max-w-md border-3 border-neo-black p-6">
@@ -794,7 +759,6 @@ function MembershipTab() {
         </button>
       </div>
 
-      {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {plans.map(plan => (
           <div key={plan.id} className={`neo-card overflow-hidden border-2 border-neo-black ${plan.is_active ? "bg-white dark:bg-neo-gray-dark" : "opacity-60"}`}>
@@ -848,7 +812,6 @@ function MembershipTab() {
         ))}
       </div>
 
-      {/* Desktop List */}
       <div className="hidden md:block space-y-3">
         {plans.map(plan => (
           <div key={plan.id} className={`neo-card p-4 flex items-center gap-4 border-2 border-neo-black ${plan.is_active ? "bg-white dark:bg-neo-gray-dark" : "opacity-60"}`}>
@@ -877,7 +840,6 @@ function MembershipTab() {
         ))}
       </div>
 
-      {/* Modal */}
       {isModalOpen && editingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
           <div className="neo-card bg-white dark:bg-neo-gray-dark w-full max-w-lg border-3 border-neo-black p-6 max-h-[90vh] overflow-y-auto">
@@ -889,13 +851,13 @@ function MembershipTab() {
                 <input value={editingPlan.original_price || ""} onChange={e => setEditingPlan({...editingPlan, original_price: e.target.value || null})} placeholder="Original Price" className="neo-input w-full p-2" />
                 <input type="number" min="0" max="100" value={editingPlan.discount_percent || ""} onChange={e => setEditingPlan({...editingPlan, discount_percent: e.target.value ? parseInt(e.target.value) : null})} placeholder="Discount %" className="neo-input w-full p-2" />
               </div>
-              
+
               {/* DROPDOWN PERIOD */}
               <div>
                 <label className="block font-bold text-sm mb-1">Period *</label>
-                <select 
-                  value={editingPlan.period || ""} 
-                  onChange={e => setEditingPlan({...editingPlan, period: e.target.value})} 
+                <select
+                  value={editingPlan.period || ""}
+                  onChange={e => setEditingPlan({...editingPlan, period: e.target.value})}
                   className="neo-input w-full p-2"
                 >
                   <option value="">Select period...</option>
@@ -903,11 +865,14 @@ function MembershipTab() {
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">This determines how long VIP will be active for users.</p>
+                <p className="text-xs text-gray-500 mt-1">Determines how long VIP stays active for users.</p>
               </div>
-              
+
               <input value={editingPlan.description || ""} onChange={e => setEditingPlan({...editingPlan, description: e.target.value})} placeholder="Description" className="neo-input w-full p-2" />
-              <input value={editingPlan.info_gangguan || ""} onChange={e => setEditingPlan({...editingPlan, info_gangguan: e.target.value || null})} placeholder="Info Gangguan" className="neo-input w-full p-2 border-red-400" />
+
+              {/* GANTI BAHASA INDONESIA KE INGGRIS */}
+              <input value={editingPlan.info_gangguan || ""} onChange={e => setEditingPlan({...editingPlan, info_gangguan: e.target.value || null})} placeholder="Service Notice" className="neo-input w-full p-2 border-red-400" />
+
               <div className="grid grid-cols-2 gap-3">
                 <select value={editingPlan.accent || "cyan"} onChange={e => setEditingPlan({...editingPlan, accent: e.target.value})} className="neo-input w-full p-2">
                   <option value="cyan">Cyan</option>
