@@ -470,27 +470,37 @@ function UsersTab() {
   }
 
   const handleMakeVip = async () => {
-    if (!selectedUser || !selectedPlanId) return
-    const plan = plans.find(p => p.id === selectedPlanId)
-    if (!plan) return
+  if (!selectedUser || !selectedPlanId) return
+  const plan = plans.find(p => p.id === selectedPlanId)
+  if (!plan) return
 
-    let days = 30
-    if (plan.period.includes("week")) days = 7
-    else if (plan.period.includes("month")) days = 30
-    else if (plan.period.includes("year")) days = 365
-    else if (plan.name.toLowerCase().includes("lifetime")) days = 36500
+  let days = 30
+  const periodStr = (plan.period || "").toLowerCase()
+  const nameStr = (plan.name || "").toLowerCase()
 
-    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-
-    const { error } = await supabase.from("users").update({ 
-      is_vip: true, vip_plan_id: selectedPlanId, vip_expires_at: expiresAt 
-    }).eq("id", selectedUser.id)
-
-    if (error) { toast.error("Failed to activate VIP"); return }
-    toast.success(`VIP ${plan.name} activated!`)
-    setShowVipModal(false)
-    fetchUsers()
+  // Parse format: "3 months", "1 year", "2 week", dll
+  const match = periodStr.match(/(\d+)\s*(week|month|year)/)
+  if (match) {
+    const num = parseInt(match[1])
+    const unit = match[2]
+    if (unit === "week") days = num * 7
+    else if (unit === "month") days = num * 30
+    else if (unit === "year") days = num * 365
+  } else if (periodStr.includes("lifetime") || nameStr.includes("lifetime")) {
+    days = 36500
   }
+
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+
+  const { error } = await supabase.from("users").update({ 
+    is_vip: true, vip_plan_id: selectedPlanId, vip_expires_at: expiresAt 
+  }).eq("id", selectedUser.id)
+
+  if (error) { toast.error("Failed to activate VIP"); return }
+  toast.success(`VIP ${plan.name} activated! (${days} hari)`)
+  setShowVipModal(false)
+  fetchUsers()
+}
 
   const handleRemoveVip = async (id: string) => {
     const { error } = await supabase.from("users").update({ 
