@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {
-    default: "APKMonza - APKVault",
-    template: "%s | APKMonza",
+    default: "APKMonx - APKVault",
+    template: "%s | APKMonx",
   },
   description: "Download aplikasi dan game mod terbaru dengan style Neo Brutalism modern. Aman, cepat, dan terpercaya.",
   keywords: ["apk download", "game mod", "android", "neo brutalism", "app store"],
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "id_ID",
-    siteName: "APKMonza",
+    siteName: "APKMonx",
   },
 }
 
