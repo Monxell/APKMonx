@@ -145,6 +145,10 @@ export default function AdminPage() {
 function DashboardTab() {
   const [stats, setStats] = useState({ apps: 0, users: 0, downloads: 0, vip: 0 })
   const [recentDownloads, setRecentDownloads] = useState<any[]>([])
+  const [maintenance, setMaintenance] = useState(false)
+  const [maintenanceMsg, setMaintenanceMsg] = useState("")
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false)
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -157,8 +161,52 @@ function DashboardTab() {
       const { data: recent } = await supabase.from("downloads").select("*").order("created_at", { ascending: false }).limit(10)
       setRecentDownloads(recent || [])
     }
+
+    const fetchMaintenance = async () => {
+      const res = await fetch("/api/maintenance")
+      const data = await res.json()
+      setMaintenance(data.maintenance)
+      setMaintenanceMsg(data.message)
+    }
+
     fetchStats()
+    fetchMaintenance()
   }, [supabase])
+
+  const toggleMaintenance = async () => {
+    setLoadingMaintenance(true)
+    const newValue = !maintenance
+
+    const res = await fetch("/api/maintenance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: newValue, message: maintenanceMsg }),
+    })
+
+    if (res.ok) {
+      setMaintenance(newValue)
+      toast.success(newValue ? "Maintenance mode ON" : "Maintenance mode OFF")
+    } else {
+      toast.error("Failed to update maintenance mode")
+    }
+    setLoadingMaintenance(false)
+  }
+
+  const saveMessage = async () => {
+    setLoadingMaintenance(true)
+    const res = await fetch("/api/maintenance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: maintenance, message: maintenanceMsg }),
+    })
+
+    if (res.ok) {
+      toast.success("Maintenance message updated!")
+    } else {
+      toast.error("Failed to update message")
+    }
+    setLoadingMaintenance(false)
+  }
 
   const statCards = [
     { label: "Total Apps", value: stats.apps, icon: Package, color: "bg-neo-cyan" },
@@ -169,7 +217,38 @@ function DashboardTab() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-black flex items-center gap-2"><BarChart3 className="w-8 h-8 text-neo-cyan dark:text-neo-purple" /> Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-black flex items-center gap-2">
+          <BarChart3 className="w-8 h-8 text-neo-cyan dark:text-neo-purple" /> Dashboard
+        </h1>
+        
+        <button
+          onClick={() => setShowMaintenanceModal(true)}
+          className={`neo-button px-4 py-2 font-bold text-sm flex items-center gap-2 transition-all ${
+            maintenance 
+              ? "bg-red-500 text-white border-2 border-neo-black shadow-neo" 
+              : "bg-green-500 text-white border-2 border-neo-black shadow-neo"
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          {maintenance ? "Maintenance ON" : "Maintenance OFF"}
+        </button>
+      </div>
+
+      {maintenance && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="neo-card bg-red-100 dark:bg-red-900/20 border-2 border-red-500 p-4 flex items-center gap-3"
+        >
+          <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="font-bold text-red-600 dark:text-red-400">Maintenance Mode Active</p>
+            <p className="text-xs text-red-500 dark:text-red-300 line-clamp-1">{maintenanceMsg}</p>
+          </div>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => {
           const Icon = stat.icon
@@ -187,23 +266,97 @@ function DashboardTab() {
           )
         })}
       </div>
+
       <div className="neo-card bg-white dark:bg-neo-gray-dark p-6">
-        <h2 className="text-xl font-black mb-4 flex items-center gap-2"><Download className="w-5 h-5 text-neo-cyan dark:text-neo-purple" /> Recent Downloads</h2>
+        <h2 className="text-xl font-black mb-4 flex items-center gap-2">
+          <Download className="w-5 h-5 text-neo-cyan dark:text-neo-purple" /> Recent Downloads
+        </h2>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead><tr className="border-b-2 border-neo-black"><th className="text-left py-2 text-xs font-black">App</th><th className="text-left py-2 text-xs font-black">Date</th><th className="text-left py-2 text-xs font-black">Type</th></tr></thead>
+            <thead>
+              <tr className="border-b-2 border-neo-black">
+                <th className="text-left py-2 text-xs font-black">App</th>
+                <th className="text-left py-2 text-xs font-black">Date</th>
+                <th className="text-left py-2 text-xs font-black-black">Type</th>
+              </tr>
+            </thead>
             <tbody>
               {recentDownloads.map((dl) => (
                 <tr key={dl.id} className="border-b border-gray-200 dark:border-gray-700">
                   <td className="py-2 text-sm font-bold">{dl.app_name}</td>
                   <td className="py-2 text-xs text-gray-500">{formatDate(dl.created_at)}</td>
-                  <td className="py-2">{dl.is_vip ? <span className="neo-badge bg-neo-yellow text-xs">VIP</span> : <span className="text-xs text-gray-500">Free</span>}</td>
+                  <td className="py-2">
+                    {dl.is_vip ? <span className="neo-badge bg-neo-yellow text-xs">VIP</span> : <span className="text-xs text-gray-500">Free</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* MAINTENANCE MODAL */}
+      {showMaintenanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="neo-card bg-white dark:bg-neo-gray-dark p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-black flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" /> Maintenance Settings
+              </h2>
+              <button onClick={() => setShowMaintenanceModal(false)} className="neo-button p-2 bg-gray-300 dark:bg-gray-600 text-neo-black dark:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Toggle Switch */}
+              <div className="flex items-center justify-between p-3 border-2 border-neo-black rounded-lg bg-neo-gray-light dark:bg-neo-gray-dark">
+                <div>
+                  <p className="font-bold text-sm">Maintenance Mode</p>
+                  <p className="text-xs text-gray-500">{maintenance ? "Site is currently down" : "Site is running normally"}</p>
+                </div>
+                <button
+                  onClick={toggleMaintenance}
+                  disabled={loadingMaintenance}
+                  className={`relative w-14 h-8 rounded-full border-2 border-neo-black transition-colors ${
+                    maintenance ? "bg-red-500" : "bg-green-500"
+                  }`}
+                >
+                  <div className={`absolute top-1 w-5 h-5 bg-white border-2 border-neo-black rounded-full transition-transform ${
+                    maintenance ? "translate-x-7" : "translate-x-1"
+                  }`} />
+                </button>
+              </div>
+
+              {/* Custom Message */}
+              <div>
+                <label className="block font-bold text-sm mb-1">Maintenance Message</label>
+                <textarea
+                  value={maintenanceMsg}
+                  onChange={(e) => setMaintenanceMsg(e.target.value)}
+                  rows={3}
+                  className="neo-input w-full px-3 py-2 text-sm"
+                  placeholder="Enter message for users..."
+                />
+                <p className="text-xs text-gray-500 mt-1">This message will be shown to all users during maintenance.</p>
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setShowMaintenanceModal(false)} className="neo-button flex-1 py-2 bg-gray-400 dark:bg-gray-600 text-white font-bold">
+                  Close
+                </button>
+                <button 
+                  onClick={saveMessage} 
+                  disabled={loadingMaintenance}
+                  className="neo-button flex-1 py-2 bg-neo-cyan text-white font-bold"
+                >
+                  {loadingMaintenance ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Save Message"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
