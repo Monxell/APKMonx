@@ -312,4 +312,4 @@ export default function MembershipPage() {
       </motion.div>
     </main>
   )
-                      }
+                        }
