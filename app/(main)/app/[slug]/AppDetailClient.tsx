@@ -94,33 +94,71 @@ export function AppDetailClient({ app, relatedApps }: Props) {
       </Link>
 
       {/* 1. Header Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mx-1 neo-card bg-white dark:bg-neo-gray-dark p-5"
-      >
-        <div className="flex items-center gap-4">
-          {/* Icon App */}
-          <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 bg-neo-cyan/20 dark:bg-neo-purple/20 border-3 border-neo-black rounded-2xl flex items-center justify-center overflow-hidden shadow-neo">
-            {app.icon_url ? (
-              <img
-                src={app.icon_url}
-                alt={app.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.style.display = 'none'
-                  const parent = target.parentElement
-                  if (parent) {
-                    parent.innerHTML = `<span class="text-3xl font-bold text-neo-cyan dark:text-neo-purple">${app.name.charAt(0)}</span>`
-                  }
-                }}
-              />
-            ) : (
-              <span className="text-3xl font-bold text-neo-cyan dark:text-neo-purple">{app.name.charAt(0)}</span>
-            )}
-          </div>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="mx-1 neo-card bg-white dark:bg-neo-gray-dark p-5"
+>
+  <div className="flex items-center gap-4">
+    {/* Icon App */}
+    <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 bg-neo-cyan/20 dark:bg-neo-purple/20 border-3 border-neo-black rounded-2xl flex items-center justify-center overflow-hidden shadow-neo">
+      {app.icon_url ? (
+        <img
+          src={app.icon_url}
+          alt={app.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent) {
+              parent.innerHTML = `<span class="text-3xl font-bold text-neo-cyan dark:text-neo-purple">${app.name.charAt(0)}</span>`
+            }
+          }}
+        />
+      ) : (
+        <span className="text-3xl font-bold text-neo-cyan dark:text-neo-purple">{app.name.charAt(0)}</span>
+      )}
+    </div>
+
+    {/* Info App */}
+    <div className="flex-1 min-w-0">
+      <h1 className="text-lg md:text-xl font-black truncate">{app.name}</h1>
+
+      {/* BARIS VERSION + CATEGORY + FAVORITE BUTTON */}
+      <div className="flex items-center justify-between gap-2 mt-1">
+        <div className="flex items-center gap-2 text-sm font-bold min-w-0">
+          <span className="text-neo-cyan dark:text-neo-purple">v{app.version}</span>
+          {category && (
+            <>
+              <span className="text-gray-400">•</span>
+              <span className="text-gray-500 dark:text-gray-400 truncate">{category.name}</span>
+            </>
+          )}
+        </div>
+        <div className="flex-shrink-0">
+          <FavoriteButton 
+            appId={app.id} 
+            isVip={isVip} 
+            userId={user?.id} 
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 mt-2 text-sm">
+        <span className="flex items-center gap-1">
+          <Star className="w-4 h-4 fill-neo-yellow text-neo-yellow" />
+          <span className="font-bold">{app.rating || "4.5"}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <Download className="w-4 h-4 text-gray-400" />
+          <span className="font-bold">{(app.download_count || 0).toLocaleString()}</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</motion.div>
 
           {/* Info App */}
           <div className="flex-1 min-w-0">
