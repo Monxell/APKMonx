@@ -269,11 +269,31 @@ function AppsTab() {
   }
 
   const toggleRecommended = async (app: App) => {
-    const { error } = await supabase.from("apps").update({ is_recommended: !app.is_recommended }).eq("id", app.id)
-    if (error) { toast.error("Failed to update: " + error.message); return }
-    toast.success(app.is_recommended ? "Removed from recommendations" : "Added to recommendations!")
-    fetchApps()
+  const newValue = !app.is_recommended
+  
+  // Optimistic update (langsung ubah UI dulu)
+  setApps(prev => prev.map(a => 
+    a.id === app.id ? { ...a, is_recommended: newValue } : a
+  ))
+
+  const { error } = await supabase
+    .from("apps")
+    .update({ is_recommended: newValue })
+    .eq("id", app.id)
+
+  if (error) {
+    // Rollback kalau error
+    setApps(prev => prev.map(a => 
+      a.id === app.id ? { ...a, is_recommended: app.is_recommended } : a
+    ))
+    toast.error("Failed to update: " + error.message)
+    return
   }
+
+  toast.success(newValue ? "Added to recommendations" : "Removed from recommendations!")
+  // Fetch ulang untuk make sure data sync
+  fetchApps()
+}
 
   const openEdit = (app: App) => { setEditingApp(app); setFormData(app); setShowModal(true) }
   const openCreate = () => { setEditingApp(null); setFormData(emptyApp); setScreenshotUrl(""); setShowModal(true) }
