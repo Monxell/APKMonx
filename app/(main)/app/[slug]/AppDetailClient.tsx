@@ -8,7 +8,7 @@ import { App, Category } from "@/types"
 import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { AppCard } from "@/components/ui/AppCard"
-import FavoriteButton from "@/components/FavoriteButton"
+import FavoriteButton from "@/components/ui/FavoriteButton"
 import { toast } from "sonner"
 
 interface Props {
