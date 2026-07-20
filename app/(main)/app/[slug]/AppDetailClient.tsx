@@ -22,6 +22,7 @@ export function AppDetailClient({ app, relatedApps }: Props) {
   const [showVipModal, setShowVipModal] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
   const [category, setCategory] = useState<Category | null>(null)
+  const [downloadCount, setDownloadCount] = useState(0)
   const supabase = createClient()
 
   useEffect(() => {
@@ -41,9 +42,15 @@ export function AppDetailClient({ app, relatedApps }: Props) {
       }
     }
 
+    const fetchDownloadCount = async () => {
+      const { count } = await supabase.from("downloads").select("*", { count: "exact", head: true }).eq("app_id", app.id)
+      setDownloadCount(count || 0)
+    }
+
     getUser()
     getCategory()
-  }, [])
+    fetchDownloadCount()
+  }, [app.id])
 
   const handleDownload = async () => {
     const downloadUrl = app.free_url
@@ -62,6 +69,7 @@ export function AppDetailClient({ app, relatedApps }: Props) {
       })
     }
 
+    setDownloadCount(prev => prev + 1)
     window.open(downloadUrl, "_blank")
     toast.success("Download started!")
   }
@@ -82,6 +90,7 @@ export function AppDetailClient({ app, relatedApps }: Props) {
       download_url: app.vip_url,
       is_vip: true,
     })
+    setDownloadCount(prev => prev + 1)
     window.open(app.vip_url!, "_blank")
     toast.success("VIP Download started!")
   }
@@ -154,7 +163,7 @@ export function AppDetailClient({ app, relatedApps }: Props) {
               </span>
               <span className="flex items-center gap-1">
                 <Download className="w-4 h-4 text-gray-400" />
-                <span className="font-bold">{(app.download_count || 0).toLocaleString()}</span>
+                <span className="font-bold">{downloadCount.toLocaleString()}</span>
               </span>
             </div>
           </div>
@@ -267,36 +276,47 @@ export function AppDetailClient({ app, relatedApps }: Props) {
           Download Link
         </h2>
         <div className="space-y-3">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleDownload}
-            className="w-full neo-button px-6 py-4 bg-neo-cyan dark:bg-neo-purple text-white font-black text-lg flex items-center justify-center gap-2"
-          >
-            <Download className="w-5 h-5" />
-            Download APK {app.size && `(${app.size})`}
-          </motion.button>
-
-          {app.vip_url && (
+          {isVip ? (
+            /* VIP user: only show VIP download button */
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleVipDownload}
+              className="w-full neo-button px-6 py-4 bg-neo-yellow text-neo-black font-black text-lg flex items-center justify-center gap-2"
+            >
+              <Crown className="w-5 h-5" />
+              Download VIP (Direct) {app.size && `(${app.size})`}
+            </motion.button>
+          ) : (
+            /* Non-VIP user: show free download + locked VIP + promo */
             <>
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={handleVipDownload}
-                className={`w-full neo-button px-6 py-4 font-black text-lg flex items-center justify-center gap-2 ${
-                  isVip
-                    ? "bg-neo-yellow text-neo-black"
-                    : "bg-neo-yellow/30 text-neo-black border-dashed"
-                }`}
+                onClick={handleDownload}
+                className="w-full neo-button px-6 py-4 bg-neo-cyan dark:bg-neo-purple text-white font-black text-lg flex items-center justify-center gap-2"
               >
-                <Crown className="w-5 h-5" />
-                {isVip ? "Download VIP (Direct)" : "Download VIP 🔒"}
+                <Download className="w-5 h-5" />
+                Download APK {app.size && `(${app.size})`}
               </motion.button>
 
-              <div className="flex items-center gap-2 p-3 border-2 border-neo-black rounded-lg bg-neo-yellow/10">
-                <Crown className="w-4 h-4 text-neo-yellow flex-shrink-0" />
-                <p className="text-sm font-bold">
-                  <span className="text-neo-yellow">VIP</span> users get direct download links without redirects
-                </p>
-              </div>
+              {app.vip_url && (
+                <>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleVipDownload}
+                    className="w-full neo-button px-6 py-4 font-black text-lg flex items-center justify-center gap-2 bg-neo-yellow/30 text-neo-black border-dashed"
+                  >
+                    <Crown className="w-5 h-5" />
+                    Download VIP 🔒
+                  </motion.button>
+
+                  <div className="flex items-center gap-2 p-3 border-2 border-neo-black rounded-lg bg-neo-yellow/10">
+                    <Crown className="w-4 h-4 text-neo-yellow flex-shrink-0" />
+                    <p className="text-sm font-bold">
+                      <span className="text-neo-yellow">VIP</span> users get direct download links without redirects
+                    </p>
+                  </div>
+                </>
+              )}
             </>
           )}
 
