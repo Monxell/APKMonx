@@ -221,7 +221,7 @@ function DashboardTab() {
         <h1 className="text-3xl font-black flex items-center gap-2">
           <BarChart3 className="w-8 h-8 text-neo-cyan dark:text-neo-purple" /> Dashboard
         </h1>
-        
+
         <button
           onClick={() => setShowMaintenanceModal(true)}
           className={`neo-button px-4 py-2 font-bold text-sm flex items-center gap-2 transition-all ${
@@ -369,6 +369,7 @@ function AppsTab() {
   const [editingApp, setEditingApp] = useState<App | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [screenshotUrl, setScreenshotUrl] = useState("")
+  const [downloadCounts, setDownloadCounts] = useState<Record<string, number>>({})
   const supabase = createClient()
 
   const emptyApp: Partial<App> = {
@@ -380,7 +381,7 @@ function AppsTab() {
   }
   const [formData, setFormData] = useState<Partial<App>>(emptyApp)
 
-  useEffect(() => { fetchApps(); fetchCategories() }, [])
+  useEffect(() => { fetchApps(); fetchCategories(); fetchDownloadCounts() }, [])
 
   const fetchApps = async () => {
     const { data, error } = await supabase.from("apps").select("*").order("created_at", { ascending: false })
@@ -391,6 +392,16 @@ function AppsTab() {
   const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*")
     setCategories(data || [])
+  }
+
+  const fetchDownloadCounts = async () => {
+    const { data, error } = await supabase.from("downloads").select("app_id")
+    if (error) { console.error("Failed to load download counts:", error); return }
+    const counts: Record<string, number> = {}
+    ;(data || []).forEach((d: any) => {
+      counts[d.app_id] = (counts[d.app_id] || 0) + 1
+    })
+    setDownloadCounts(counts)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -418,7 +429,7 @@ function AppsTab() {
     if (!confirm("Are you sure you want to delete this app?")) return
     const { error } = await supabase.from("apps").delete().eq("id", id)
     if (error) { toast.error("Failed to delete: " + error.message); return }
-    toast.success("App deleted!"); fetchApps()
+    toast.success("App deleted!"); fetchApps(); fetchDownloadCounts()
   }
 
   const toggleRecommended = async (app: App) => {
@@ -472,6 +483,7 @@ function AppsTab() {
                 <th className="text-left px-4 py-3 font-black text-sm">App</th>
                 <th className="text-left px-4 py-3 font-black text-sm hidden md:table-cell">Version</th>
                 <th className="text-left px-4 py-3 font-black text-sm hidden md:table-cell">Category</th>
+                <th className="text-left px-4 py-3 font-black text-sm">Downloads</th>
                 <th className="text-left px-4 py-3 font-black text-sm">Rec</th>
                 <th className="text-left px-4 py-3 font-black text-sm">Actions</th>
               </tr>
@@ -489,6 +501,12 @@ function AppsTab() {
                   </td>
                   <td className="px-4 py-3 text-sm hidden md:table-cell">{app.version}</td>
                   <td className="px-4 py-3 text-sm hidden md:table-cell">{categories.find((c) => c.id === app.category_id)?.name || "-"}</td>
+                  <td className="px-4 py-3">
+                    <span className="neo-badge bg-neo-cyan/10 text-neo-cyan dark:text-neo-purple text-xs font-bold">
+                      <Download className="w-3 h-3 inline mr-1" />
+                      {(downloadCounts[app.id] || 0).toLocaleString()}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <button onClick={() => toggleRecommended(app)} className={`neo-button p-1.5 ${app.is_recommended ? "bg-neo-yellow text-neo-black" : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-300"}`}>
                       <Star className={`w-4 h-4 ${app.is_recommended ? "fill-current" : ""}`} />
@@ -527,6 +545,7 @@ function AppsTab() {
                 <div><label className="block font-bold text-sm mb-1">Size</label><input value={formData.size || ""} onChange={(e) => setFormData({ ...formData, size: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="50 MB" /></div>
                 <div><label className="block font-bold text-sm mb-1">Icon URL</label><input value={formData.icon_url || ""} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} className="neo-input w-full px-3 py-2" placeholder="https://..." /></div>
                 <div><label className="block font-bold text-sm mb-1 flex items-center gap-1"><Star className="w-3 h-3 text-neo-yellow fill-neo-yellow" /> Rating</label><input type="number" step="0.1" min="0" max="5" value={formData.rating ?? 4.5} onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) })} className="neo-input w-full px-3 py-2" placeholder="4.5" /></div>
+              </div>
               <div className="border-2 border-neo-black rounded-lg p-4 bg-neo-gray-light dark:bg-neo-gray-dark space-y-3">
                 <label className="block font-bold text-sm flex items-center gap-2"><ImageIcon className="w-4 h-4 text-neo-cyan dark:text-neo-purple" /> Screenshots</label>
                 <div className="flex gap-2">
@@ -541,7 +560,7 @@ function AppsTab() {
                     {formData.screenshots.map((url, index) => (
                       <div key={index} className="relative group">
                         <div className="aspect-[9/16] rounded-lg border-2 border-neo-black overflow-hidden bg-white dark:bg-neo-gray-dark">
-                          <img src={url} alt={`Screenshot ${index + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%239ca3af' font-size='10'%3EBroken Link%3C/text%3E%3C/svg%3E" }} />
+                          <img src={url} alt={`Screenshot ${index + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23f3f4f6\'/%3E%3Ctext x=\'50\' y=\'50\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%239ca3af\' font-size=\'10\'%3EBroken Link%3C/text%3E%3C/svg%3E" }} />
                         </div>
                         <button type="button" onClick={() => removeScreenshot(index)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full border-2 border-neo-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-neo"><Trash className="w-3 h-3" /></button>
                         <p className="text-xs text-gray-500 mt-1 truncate px-1">Screenshot {index + 1}</p>
