@@ -284,7 +284,7 @@ export function AppDetailClient({ app, relatedApps }: Props) {
               className="w-full neo-button px-6 py-4 bg-neo-yellow text-neo-black font-black text-lg flex items-center justify-center gap-2"
             >
               <Crown className="w-5 h-5" />
-              Download VIP (Direct) {app.size && `(${app.size})`}
+              Download VIP (Direct)
             </motion.button>
           ) : (
             /* Non-VIP user: show free download + locked VIP + promo */
@@ -295,7 +295,7 @@ export function AppDetailClient({ app, relatedApps }: Props) {
                 className="w-full neo-button px-6 py-4 bg-neo-cyan dark:bg-neo-purple text-white font-black text-lg flex items-center justify-center gap-2"
               >
                 <Download className="w-5 h-5" />
-                Download APK {app.size && `(${app.size})`}
+                Download APK
               </motion.button>
 
               {app.vip_url && (
